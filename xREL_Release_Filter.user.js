@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        xREL Release Filter
 // @namespace   tag:https://github.com/0657code/greasemonkey-xrel-filter,2015-07-16
-// @description Release filter for xREL. Also hides the "new comments" box upon clicking on its title. Credits to GarionCZ for his SteamGifts filter script.
+// @description Release filter for xREL. Also hides the "new comments" box upon clicking on its title. Special thanks to GarionCZ for his SteamGifts filter script.
 // @author      0657_Code
 // @include     http://www.xrel.to/movie/*/releases.html*
 // @include     http://www.xrel.to/tv/*/releases.html*
