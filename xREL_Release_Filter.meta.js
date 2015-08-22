@@ -7,7 +7,7 @@
 // @include     http://www.xrel.to/tv/*/releases.html*
 // @downloadURL https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.user.js
 // @updateURL   https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.meta.js
-// @version     1.0
+// @version     1.0.1
 // @grant       GM_getValue
 // @grant       GM_setValue
 // ==/UserScript==
