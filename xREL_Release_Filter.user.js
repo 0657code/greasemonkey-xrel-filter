@@ -7,7 +7,7 @@
 // @include     http://www.xrel.to/tv/*/releases.html*
 // @downloadURL https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.user.js
 // @updateURL   https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.meta.js
-// @version     1.0.2
+// @version     1.1
 // @grant       GM_getValue
 // @grant       GM_setValue
 // ==/UserScript==
@@ -16,41 +16,9 @@
 {
   var ID_DIV_HEADER = "idDivHeader";
   var ID_DIV_CONTENT = "idDivContent";
-  
-  var CONST_TYPE_TELESYNC = ' TeleSync';
-  var CONST_TYPE_WEBRIP = ' Web-Rip';
-  var CONST_TYPE_DVD_RIP = ' DVD-Rip';
-  var CONST_TYPE_DVD_SCR = ' DVD-Scr.';
-  var CONST_TYPE_DVD = ' DVD-R';
-  var CONST_TYPE_HDTV = ' HDTV';
-  var CONST_TYPE_BLURAY = ' Blu-ray';
-  var CONST_CAT_XVID = 'XviD';
-  var CONST_CAT_X264 = 'x264';
-  var CONST_CAT_DVD = 'DVD-R';
-  var CONST_CAT_HDTV = 'HDTV';
-  var CONST_CAT_COMPLETE_HD = 'Compl. HD';
-  var CONST_RLSNAME_BDRIP = /BDRip/i;
-  var CONST_RLSNAME_720P = /720p/i;
-  var CONST_RLSNAME_1080P = /1080p/i;
-  var CONST_RLSNAME_COMPLETE_BLURAY = /Complete.Bluray/i;
 
   var KEY_FILTER_MASTERSWITCH = "filterMasterSwitch";
-  var KEY_FILTER_TYPE_TELESYNC = "filterTypeTeleSync";
-  var KEY_FILTER_TYPE_WEBRIP = "filterTypeWebRip";
-  var KEY_FILTER_TYPE_DVD_RIP = "filterTypeDvdRip";
-  var KEY_FILTER_TYPE_DVD_SCR = "filterTypeDvdScr";
-  var KEY_FILTER_TYPE_DVD = "filterTypeDvd";
-  var KEY_FILTER_TYPE_HDTV = "filterTypeHdtv";
-  var KEY_FILTER_TYPE_BLURAY = "filterTypeBluRay";
-  var KEY_FILTER_CAT_XVID = "filterCatXvid";
-  var KEY_FILTER_CAT_X264 = "filterCatX264";
-  var KEY_FILTER_CAT_DVD = "filterCatDvd";
-  var KEY_FILTER_CAT_HDTV = "filterCatHdtv";
-  var KEY_FILTER_CAT_COMPLETE_HD = "filterCatCompleteHd";
-  var KEY_FILTER_RLSNAME_BDRIP = "filterRlsnameBdRip";
-  var KEY_FILTER_RLSNAME_720P = "filterRlsname720p";
-  var KEY_FILTER_RLSNAME_1080P = "filterRlsname1080p";
-  var KEY_FILTER_RLSNAME_COMPLETE_BLURAY = "filterRlsnameCompleteBluRay";
+  var KEY_FILTER_HIDE = "hideFilter";
   var KEY_HIDE_NEW_COMMENTS = "hideNewComments";
   
   var DEFAULT_FILTER_STATUS = false;
@@ -70,29 +38,50 @@
   ]
 
   var filter_MasterSwitch = GM_getValue(KEY_FILTER_MASTERSWITCH, DEFAULT_FILTER_STATUS);
-  var filter_Type_TeleSync = GM_getValue(KEY_FILTER_TYPE_TELESYNC, DEFAULT_FILTER_STATUS);
-  var filter_Type_WebRip = GM_getValue(KEY_FILTER_TYPE_WEBRIP, DEFAULT_FILTER_STATUS);
-  var filter_Type_DvdRip = GM_getValue(KEY_FILTER_TYPE_DVD_RIP, DEFAULT_FILTER_STATUS);
-  var filter_Type_DvdScr = GM_getValue(KEY_FILTER_TYPE_DVD_SCR, DEFAULT_FILTER_STATUS);
-  var filter_Type_Dvd = GM_getValue(KEY_FILTER_TYPE_DVD, DEFAULT_FILTER_STATUS);
-  var filter_Type_Hdtv = GM_getValue(KEY_FILTER_TYPE_HDTV, DEFAULT_FILTER_STATUS);
-  var filter_Type_BluRay = GM_getValue(KEY_FILTER_TYPE_BLURAY, DEFAULT_FILTER_STATUS);
-  var filter_Cat_Xvid = GM_getValue(KEY_FILTER_CAT_XVID, DEFAULT_FILTER_STATUS);
-  var filter_Cat_X264 = GM_getValue(KEY_FILTER_CAT_X264, DEFAULT_FILTER_STATUS);
-  var filter_Cat_Dvd = GM_getValue(KEY_FILTER_CAT_DVD, DEFAULT_FILTER_STATUS);
-  var filter_Cat_Hdtv = GM_getValue(KEY_FILTER_CAT_HDTV, DEFAULT_FILTER_STATUS);
-  var filter_Cat_CompleteHd = GM_getValue(KEY_FILTER_CAT_COMPLETE_HD, DEFAULT_FILTER_STATUS);
-  var filter_Rlsname_BdRip = GM_getValue(KEY_FILTER_RLSNAME_BDRIP, DEFAULT_FILTER_STATUS);
-  var filter_Rlsname_720p = GM_getValue(KEY_FILTER_RLSNAME_720P, DEFAULT_FILTER_STATUS);
-  var filter_Rlsname_1080p = GM_getValue(KEY_FILTER_RLSNAME_1080P, DEFAULT_FILTER_STATUS);
-  var filter_Rlsname_CompleteBluRay = GM_getValue(KEY_FILTER_RLSNAME_COMPLETE_BLURAY, DEFAULT_FILTER_STATUS);
 
   var contentDivStyleDisplay;
   var commentDivStyleDisplay;
+
+  var FILTERS = {
+    CATEGORIES : {
+      name : "Category",
+      VALUE : {
+        XVID : {name: 'XviD', key: "filterCatXvid", func: function(){onCheckboxClick(FILTERS.CATEGORIES.VALUE.XVID);}},
+        X264 : {name: 'x264', key: "filterCatX264", func: function(){onCheckboxClick(FILTERS.CATEGORIES.VALUE.X264);}},
+        DVD : {name: 'DVD-R', key: "filterCatDvd", func: function(){onCheckboxClick(FILTERS.CATEGORIES.VALUE.DVD);}},
+        HDTV : {name: 'HDTV', key: "filterCatHdtv", func: function(){onCheckboxClick(FILTERS.CATEGORIES.VALUE.HDTV);}},
+        COMPLETEHD : {name: 'Compl. HD', key: "filterCatCompleteHd", func: function(){onCheckboxClick(FILTERS.CATEGORIES.VALUE.COMPLETEHD);}}
+      }
+    },
+    TYPES : {
+      name : "Type",
+      VALUE : {
+        TELESYNC : {name: ' TeleSync', key: "filterTypeTeleSync", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.TELESYNC);}},
+        WEBRIP : {name: ' Web-Rip', key: "filterTypeWebRip", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.WEBRIP);}},
+        DVDRIP : {name: ' DVD-Rip', key: "filterTypeDvdRip", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.DVDRIP);}},
+        DVDSCR : {name: ' DVD-Scr.', key: "filterTypeDvdScr", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.DVDSCR);}},
+        DVD : {name: ' DVD-R', key: "filterTypeDvd", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.DVD);}},
+        HDTV : {name: ' HDTV', key: "filterTypeHdtv", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.HDTV);}},
+        BLURAY : {name: ' Blu-ray', key: "filterTypeBluray", func: function(){onCheckboxClick(FILTERS.TYPES.VALUE.BLURAY);}}
+      }
+    },
+    RLSNAME : {
+      name : "Rls.-Name",
+      VALUE : {
+        BDRIP : {name: ' BD-Rip', searchtext: /BDRip/i, key: "filterRlsnameBdRip", func: function(){onCheckboxClick(FILTERS.RLSNAME.VALUE.BDRIP);}},
+        P720 : {name: ' 720p', searchtext: /720p/i, key: "filterRlsname720p", func: function(){onCheckboxClick(FILTERS.RLSNAME.VALUE.P720);}},
+        P1080 : {name: ' 1080p', searchtext: /1080p/i, key: "filterRlsname1080p", func: function(){onCheckboxClick(FILTERS.RLSNAME.VALUE.P1080);}},
+        COMPLETEBLURAY : {name: ' Compl. Blu-Ray', searchtext: /Complete.Bluray/i, key: "filterRlsnameCompleteBluRay", func: function(){onCheckboxClick(FILTERS.RLSNAME.VALUE.COMPLETEBLURAY);}}
+      }
+    }
+  };
 }
 
-// Filter function
+drawUi();
 filterReleases();
+clickableNewComments();
+
+// Filter function
 function filterReleases() {
   var releases = getReleases();
 
@@ -100,121 +89,32 @@ function filterReleases() {
   for (i = 0; i < releases.length; i++)
     removeFiltering(releases[i]);
   
+  // Filter
   if(filter_MasterSwitch)
   {
     var releasesToRemove = [];
 
-    // Filter loop, fills releasesToRemove array
+    // Outside filter loop (releases)
     for (i = 0; i < releases.length; i++) {
       // Remove the filtering
       removeFiltering(releases[i]);
-
-      // Type filters
-      {
-        if (filter_Type_TeleSync) {
-          if (isReleaseType(releases[i], CONST_TYPE_TELESYNC)) {
-            releasesToRemove.push(releases[i]);
-            continue;
+      
+      // Inside filter loop (filtertypes, filters)
+      for (var t in FILTERS){
+        var filtertype = FILTERS[t];
+        for (var f in filtertype.VALUE){
+          var filter = filtertype.VALUE[f];
+          if(filter.bool){
+            if(isRelease(releases[i], filtertype.name, filter)){
+              releasesToRemove.push(releases[i]);
+              break;
+            }
           }
         }
-        if (filter_Type_WebRip) {
-          if (isReleaseType(releases[i], CONST_TYPE_WEBRIP)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Type_DvdRip) {
-          if (isReleaseType(releases[i], CONST_TYPE_DVD_RIP)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Type_DvdScr) {
-          if (isReleaseType(releases[i], CONST_TYPE_DVD_SCR)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Type_Dvd) {
-          if (isReleaseType(releases[i], CONST_TYPE_DVD)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Type_Hdtv) {
-          if (isReleaseType(releases[i], CONST_TYPE_HDTV)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Type_BluRay) {
-          if (isReleaseType(releases[i], CONST_TYPE_BLURAY)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-      }
-
-      // Category filters
-      {
-        if (filter_Cat_Xvid) {
-          if (isReleaseCat(releases[i], CONST_CAT_XVID)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Cat_X264) {
-          if (isReleaseCat(releases[i], CONST_CAT_X264)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Cat_Dvd) {
-          if (isReleaseCat(releases[i], CONST_CAT_DVD)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Cat_Hdtv) {
-          if (isReleaseCat(releases[i], CONST_CAT_HDTV)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Cat_CompleteHd) {
-          if (isReleaseCat(releases[i], CONST_CAT_COMPLETE_HD)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-      }
-
-      // Releasename filters
-      {
-        if (filter_Rlsname_BdRip) {
-          if (isReleaseName(releases[i], CONST_RLSNAME_BDRIP)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Rlsname_720p) {
-          if (isReleaseName(releases[i], CONST_RLSNAME_720P)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Rlsname_1080p) {
-          if (isReleaseName(releases[i], CONST_RLSNAME_1080P)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
-        if (filter_Rlsname_CompleteBluRay) {
-          if (isReleaseName(releases[i], CONST_RLSNAME_COMPLETE_BLURAY)) {
-            releasesToRemove.push(releases[i]);
-            continue;
-          }
-        }
+        // Break the (filtertypes) loop if the releases is already marked to remove
+        var releasesToRemoveLength = releasesToRemove.length;
+        if (releasesToRemoveLength > 0 && releasesToRemove[releasesToRemoveLength-1] == releases[i])
+          break;
       }
 
       // US-Release filter
@@ -242,7 +142,7 @@ function filterReleases() {
       }
     }
 
-    // Remove the releases in releasesToRemove array
+    // Remove the releases in releasesToRemove[]
     for (i = 0; i < releasesToRemove.length; i++) {
       releasesToRemove[i].style.display = 'none';
       releasesToRemove[i].nextElementSibling.style.display = 'none';
@@ -262,6 +162,14 @@ function getReleases() {
   allReleases.push.apply(allReleases, releasesUS);
   allReleases.push.apply(allReleases, releasesHighlight);
   return allReleases;
+}
+
+function isRelease(release, filtertypename, filter){
+  switch (filtertypename){
+    case FILTERS.TYPES.name: {return isReleaseType(release, filter.name)};
+    case FILTERS.CATEGORIES.name: {return isReleaseCat(release, filter.name)};
+    case FILTERS.RLSNAME.name: {return isReleaseName(release, filter.searchtext)};
+  }
 }
 
 function isReleaseType(release, type) {
@@ -306,7 +214,6 @@ function removeFiltering(release) {
 }
 
 // Draws the UI
-drawUi();
 function drawUi() {
   // HeaderDiv
   {
@@ -318,35 +225,23 @@ function drawUi() {
         // Clicking on the header opens/closes the filter details UI
         var contentDiv = document.getElementById(ID_DIV_CONTENT);
         if (contentDiv.style.display !== "none"){
+          GM_setValue(KEY_FILTER_HIDE, true);
           contentDivStyleDisplay = contentDiv.style.display;
           contentDiv.style.display = "none";
         }
         else{
+          GM_setValue(KEY_FILTER_HIDE, false);
           contentDiv.style.display = contentDivStyleDisplay;
         }
       };
-      // Make unselectable
-      if ('unselectable' in headerTextSpan)       // Internet Explorer, Opera
-        headerTextSpan.unselectable = !headerTextSpan.unselectable;
-      else {
-        if (window.getComputedStyle) {
-          var style = window.getComputedStyle (headerTextSpan, null);
-          if ('MozUserSelect' in style) { // Firefox
-            headerTextSpan.style.MozUserSelect = (style.MozUserSelect == "none") ? "text" : "none";
-          }
-          else {
-            if ('webkitUserSelect' in style) {      // Google Chrome and Safari
-              headerTextSpan.style.webkitUserSelect = (style.webkitUserSelect == "none") ? "text" : "none";
-            }
-          }
-        }
-      }
+      unselectable(headerTextSpan);
     }
     
     // HeaderCheckbox
     {
       var headerCheckbox = document.createElement("input");
       headerCheckbox.setAttribute("type", "checkbox");
+      //filter_MasterSwitch = GM_getValue(KEY_FILTER_MASTERSWITCH, DEFAULT_FILTER_STATUS);
       headerCheckbox.checked = filter_MasterSwitch;
       headerCheckbox.onclick = function() {
         GM_setValue(KEY_FILTER_MASTERSWITCH, headerCheckbox.checked);
@@ -370,353 +265,45 @@ function drawUi() {
 
   // ContentDiv
   {
-    // CatDiv
-    {
-      // XviD
-      {
-        var catXvidSpan = document.createElement("span");
-        catXvidSpan.appendChild(document.createTextNode("XviD"));
-
-        var catXvidCheckbox = document.createElement("input");
-        catXvidCheckbox.setAttribute("type", "checkbox");
-        catXvidCheckbox.checked = !filter_Cat_Xvid;
-        catXvidCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_CAT_XVID, !catXvidCheckbox.checked);
-          filter_Cat_Xvid = !catXvidCheckbox.checked;
-          filterReleases();
-        };
-
-        var catXvidDiv = document.createElement("div");
-        catXvidDiv.appendChild(catXvidSpan);
-        catXvidDiv.appendChild(catXvidCheckbox);
-      }
-      // X264
-      {
-        var catX264Span = document.createElement("span");
-        catX264Span.appendChild(document.createTextNode("X264"));
-
-        var catX264Checkbox = document.createElement("input");
-        catX264Checkbox.setAttribute("type", "checkbox");
-        catX264Checkbox.checked = !filter_Cat_X264;
-        catX264Checkbox.onclick = function() {
-          GM_setValue(KEY_FILTER_CAT_X264, !catX264Checkbox.checked);
-          filter_Cat_X264 = !catX264Checkbox.checked;
-          filterReleases();
-        };
-
-        var catX264Div = document.createElement("div");
-        catX264Div.appendChild(catX264Span);
-        catX264Div.appendChild(catX264Checkbox);
-      }
-      // DVD
-      {
-        var catDvdSpan = document.createElement("span");
-        catDvdSpan.appendChild(document.createTextNode("DVD-R"));
-
-        var catDvdCheckbox = document.createElement("input");
-        catDvdCheckbox.setAttribute("type", "checkbox");
-        catDvdCheckbox.checked = !filter_Cat_Dvd;
-        catDvdCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_CAT_DVD, !catDvdCheckbox.checked);
-          filter_Cat_Dvd = !catDvdCheckbox.checked;
-          filterReleases();
-        };
-
-        var catDvdDiv = document.createElement("div");
-        catDvdDiv.appendChild(catDvdSpan);
-        catDvdDiv.appendChild(catDvdCheckbox);
-      }
-      // HDTV
-      {
-        var catHdtvSpan = document.createElement("span");
-        catHdtvSpan.appendChild(document.createTextNode("HDTV"));
-
-        var catHdtvCheckbox = document.createElement("input");
-        catHdtvCheckbox.setAttribute("type", "checkbox");
-        catHdtvCheckbox.checked = !filter_Cat_Hdtv;
-        catHdtvCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_CAT_HDTV, !catHdtvCheckbox.checked);
-          filter_Cat_Hdtv = !catHdtvCheckbox.checked;
-          filterReleases();
-        };
-
-        var catHdtvDiv = document.createElement("div");
-        catHdtvDiv.appendChild(catHdtvSpan);
-        catHdtvDiv.appendChild(catHdtvCheckbox);
-      }
-      // Complete HD
-      {
-        var catCompleteHdSpan = document.createElement("span");
-        catCompleteHdSpan.appendChild(document.createTextNode("Compl. HD"));
-
-        var catCompleteHdCheckbox = document.createElement("input");
-        catCompleteHdCheckbox.setAttribute("type", "checkbox");
-        catCompleteHdCheckbox.checked = !filter_Cat_CompleteHd;
-        catCompleteHdCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_CAT_COMPLETE_HD, !catCompleteHdCheckbox.checked);
-          filter_Cat_CompleteHd = !catCompleteHdCheckbox.checked;
-          filterReleases();
-        };
-
-        var catCompleteHdDiv = document.createElement("div");
-        catCompleteHdDiv.appendChild(catCompleteHdSpan);
-        catCompleteHdDiv.appendChild(catCompleteHdCheckbox);
-      }
-
-      var catDiv = document.createElement("div");
-      catDiv.appendChild(document.createTextNode("Category"));
-      catDiv.appendChild(catXvidDiv);
-      catDiv.appendChild(catX264Div);
-      catDiv.appendChild(catDvdDiv);
-      catDiv.appendChild(catHdtvDiv);
-      catDiv.appendChild(catCompleteHdDiv);
-    }
-
-    // TypeDiv
-    {
-      // TeleSync
-      {
-        var typeTeleSyncSpan = document.createElement("span");
-        typeTeleSyncSpan.appendChild(document.createTextNode("TeleSync"));
-
-        var typeTeleSyncCheckbox = document.createElement("input");
-        typeTeleSyncCheckbox.setAttribute("type", "checkbox");
-        typeTeleSyncCheckbox.checked = !filter_Type_TeleSync;
-        typeTeleSyncCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_TELESYNC, !typeTeleSyncCheckbox.checked);
-          filter_Type_TeleSync = !typeTeleSyncCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeTeleSyncDiv = document.createElement("div");
-        typeTeleSyncDiv.appendChild(typeTeleSyncSpan);
-        typeTeleSyncDiv.appendChild(typeTeleSyncCheckbox);
-      }
-
-      // Web-Rip
-      {
-        var typeWebRipSpan = document.createElement("span");
-        typeWebRipSpan.appendChild(document.createTextNode("Web-Rip"));
-
-        var typeWebRipCheckbox = document.createElement("input");
-        typeWebRipCheckbox.setAttribute("type", "checkbox");
-        typeWebRipCheckbox.checked = !filter_Type_WebRip;
-        typeWebRipCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_WEBRIP, !typeWebRipCheckbox.checked);
-          filter_Type_WebRip = !typeWebRipCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeWebRipDiv = document.createElement("div");
-        typeWebRipDiv.appendChild(typeWebRipSpan);
-        typeWebRipDiv.appendChild(typeWebRipCheckbox);
-      }
-
-      // DVD-Rip
-      {
-        var typeDvdRipSpan = document.createElement("span");
-        typeDvdRipSpan.appendChild(document.createTextNode("DVD-Rip"));
-
-        var typeDvdRipCheckbox = document.createElement("input");
-        typeDvdRipCheckbox.setAttribute("type", "checkbox");
-        typeDvdRipCheckbox.checked = !filter_Type_DvdRip;
-        typeDvdRipCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_DVD_RIP, !typeDvdRipCheckbox.checked);
-          filter_Type_DvdRip = !typeDvdRipCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeDvdRipDiv = document.createElement("div");
-        typeDvdRipDiv.appendChild(typeDvdRipSpan);
-        typeDvdRipDiv.appendChild(typeDvdRipCheckbox);
-      }
-
-      // DVD-Scr
-      {
-        var typeDvdScrSpan = document.createElement("span");
-        typeDvdScrSpan.appendChild(document.createTextNode("DVD-Scr."));
-
-        var typeDvdScrCheckbox = document.createElement("input");
-        typeDvdScrCheckbox.setAttribute("type", "checkbox");
-        typeDvdScrCheckbox.checked = !filter_Type_DvdScr;
-        typeDvdScrCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_DVD_SCR, !typeDvdScrCheckbox.checked);
-          filter_Type_DvdScr = !typeDvdScrCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeDvdScrDiv = document.createElement("div");
-        typeDvdScrDiv.appendChild(typeDvdScrSpan);
-        typeDvdScrDiv.appendChild(typeDvdScrCheckbox);
-      }
-
-      // DVD
-      {
-        var typeDvdSpan = document.createElement("span");
-        typeDvdSpan.appendChild(document.createTextNode("DVD-R"));
-
-        var typeDvdCheckbox = document.createElement("input");
-        typeDvdCheckbox.setAttribute("type", "checkbox");
-        typeDvdCheckbox.checked = !filter_Type_Dvd;
-        typeDvdCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_DVD, !typeDvdCheckbox.checked);
-          filter_Type_Dvd = !typeDvdCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeDvdDiv = document.createElement("div");
-        typeDvdDiv.appendChild(typeDvdSpan);
-        typeDvdDiv.appendChild(typeDvdCheckbox);
-      }
-
-      // HDTV
-      {
-        var typeHdtvSpan = document.createElement("span");
-        typeHdtvSpan.appendChild(document.createTextNode("HDTV"));
-
-        var typeHdtvCheckbox = document.createElement("input");
-        typeHdtvCheckbox.setAttribute("type", "checkbox");
-        typeHdtvCheckbox.checked = !filter_Type_Hdtv;
-        typeHdtvCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_HDTV, !typeHdtvCheckbox.checked);
-          filter_Type_Hdtv = !typeHdtvCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeHdtvDiv = document.createElement("div");
-        typeHdtvDiv.appendChild(typeHdtvSpan);
-        typeHdtvDiv.appendChild(typeHdtvCheckbox);
-      }
-
-      // BluRay
-      {
-        var typeBluRaySpan = document.createElement("span");
-        typeBluRaySpan.appendChild(document.createTextNode("BluRay"));
-
-        var typeBluRayCheckbox = document.createElement("input");
-        typeBluRayCheckbox.setAttribute("type", "checkbox");
-        typeBluRayCheckbox.checked = !filter_Type_BluRay;
-        typeBluRayCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_TYPE_BLURAY, !typeBluRayCheckbox.checked);
-          filter_Type_BluRay = !typeBluRayCheckbox.checked;
-          filterReleases();
-        };
-
-        var typeBluRayDiv = document.createElement("div");
-        typeBluRayDiv.appendChild(typeBluRaySpan);
-        typeBluRayDiv.appendChild(typeBluRayCheckbox);
-      }
-
-      var typeDiv = document.createElement("div");
-      typeDiv.style.paddingLeft = "15px";
-      typeDiv.appendChild(document.createTextNode("Type"));
-      typeDiv.appendChild(typeTeleSyncDiv);
-      typeDiv.appendChild(typeWebRipDiv);
-      typeDiv.appendChild(typeDvdRipDiv);
-      typeDiv.appendChild(typeDvdScrDiv);
-      typeDiv.appendChild(typeDvdDiv);
-      typeDiv.appendChild(typeHdtvDiv);
-      typeDiv.appendChild(typeBluRayDiv);
-    }
-
-    // RlsnameDiv
-    {
-      // BD-Rip
-      {
-        var rlsnameBdRipSpan = document.createElement("span");
-        rlsnameBdRipSpan.appendChild(document.createTextNode("BD-Rip"));
-
-        var rlsnameBdRipCheckbox = document.createElement("input");
-        rlsnameBdRipCheckbox.setAttribute("type", "checkbox");
-        rlsnameBdRipCheckbox.checked = !filter_Rlsname_BdRip;
-        rlsnameBdRipCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_RLSNAME_BDRIP, !rlsnameBdRipCheckbox.checked);
-          filter_Rlsname_BdRip = !rlsnameBdRipCheckbox.checked;
-          filterReleases();
-        };
-
-        var rlsnameBdRip = document.createElement("div");
-        rlsnameBdRip.appendChild(rlsnameBdRipSpan);
-        rlsnameBdRip.appendChild(rlsnameBdRipCheckbox);
-      }
-
-      // 720p
-      {
-        var rlsname720pSpan = document.createElement("span");
-        rlsname720pSpan.appendChild(document.createTextNode("720p"));
-
-        var rlsname720pCheckbox = document.createElement("input");
-        rlsname720pCheckbox.setAttribute("type", "checkbox");
-        rlsname720pCheckbox.checked = !filter_Rlsname_720p;
-        rlsname720pCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_RLSNAME_720P, !rlsname720pCheckbox.checked);
-          filter_Rlsname_720p = !rlsname720pCheckbox.checked;
-          filterReleases();
-        };
-        
-        var rlsname720p = document.createElement("div");
-        rlsname720p.appendChild(rlsname720pSpan);
-        rlsname720p.appendChild(rlsname720pCheckbox);
-      }
-
-      // 1080p
-      {
-        var rlsname1080pSpan = document.createElement("span");
-        rlsname1080pSpan.appendChild(document.createTextNode("1080p"));
-
-        var rlsname1080pCheckbox = document.createElement("input");
-        rlsname1080pCheckbox.setAttribute("type", "checkbox");
-        rlsname1080pCheckbox.checked = !filter_Rlsname_1080p;
-        rlsname1080pCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_RLSNAME_1080P, !rlsname1080pCheckbox.checked);
-          filter_Rlsname_1080p = !rlsname1080pCheckbox.checked;
-          filterReleases();
-        };
-
-        var rlsname1080p = document.createElement("div");
-        rlsname1080p.appendChild(rlsname1080pSpan);
-        rlsname1080p.appendChild(rlsname1080pCheckbox);
-      }
-
-      // Complete BluRay
-      {
-        var rlsnameCompleteBluRaySpan = document.createElement("span");
-        rlsnameCompleteBluRaySpan.appendChild(document.createTextNode("Compl. BluRay"));
-
-        var rlsnameCompleteBluRayCheckbox = document.createElement("input");
-        rlsnameCompleteBluRayCheckbox.setAttribute("type", "checkbox");
-        rlsnameCompleteBluRayCheckbox.checked = !filter_Rlsname_CompleteBluRay;
-        rlsnameCompleteBluRayCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_RLSNAME_COMPLETE_BLURAY, !rlsnameCompleteBluRayCheckbox.checked);
-          filter_Rlsname_CompleteBluRay = !rlsnameCompleteBluRayCheckbox.checked;
-          filterReleases();
-        };
-
-        var rlsnameCompleteBluRay = document.createElement("div");
-        rlsnameCompleteBluRay.appendChild(rlsnameCompleteBluRaySpan);
-        rlsnameCompleteBluRay.appendChild(rlsnameCompleteBluRayCheckbox);
-      }
-
-      var rlsnameDiv = document.createElement("div");
-      rlsnameDiv.style.paddingLeft = "15px";
-      rlsnameDiv.appendChild(document.createTextNode("Rls.-Name"));
-      rlsnameDiv.appendChild(rlsnameBdRip);
-      rlsnameDiv.appendChild(rlsname720p);
-      rlsnameDiv.appendChild(rlsname1080p);
-      rlsnameDiv.appendChild(rlsnameCompleteBluRay);
-    }
-
     var contentDiv = document.createElement("div");
     contentDiv.id = ID_DIV_CONTENT;
     contentDiv.style.display = "flex";
     contentDiv.style.paddingTop = "5px";
     contentDiv.style.paddingBottom = "5px";
-    contentDiv.appendChild(catDiv);
-    contentDiv.appendChild(typeDiv);
-    contentDiv.appendChild(rlsnameDiv);
+    
+    for (var t in FILTERS){
+      var filtertype = FILTERS[t];
+      var typeDiv = document.createElement("div");
+      typeDiv.style.paddingLeft = "15px";
+      
+      var typeSpan = document.createElement("span");
+      typeSpan.appendChild(document.createTextNode(filtertype.name));
+      unselectable(typeSpan);
+      typeDiv.appendChild(typeSpan);
+      
+      for (var f in filtertype.VALUE){
+        var filter = filtertype.VALUE[f];
+        var span = document.createElement("span");
+        span.appendChild(document.createTextNode(filter.name));
+        unselectable(span);
+        
+        filter.checkbox = document.createElement("input");
+        filter.checkbox.setAttribute("type", "checkbox");
+        filter.bool = GM_getValue(filter.key, DEFAULT_FILTER_STATUS);
+        filter.checkbox.checked = !filter.bool;
+        filter.checkbox.onclick = filter.func;
+        
+        var div = document.createElement("div");
+        div.appendChild(span);
+        div.appendChild(filter.checkbox);
+        typeDiv.appendChild(div);
+      }
+      contentDiv.appendChild(typeDiv);
+    }
   }
   
-  if(typeof HIDE_FILTER_DEFAULT !== 'undefined' && HIDE_FILTER_DEFAULT){
+  // Hide the filter
+  if ( GM_getValue(KEY_FILTER_HIDE, (typeof HIDE_FILTER_DEFAULT !== 'undefined') ? HIDE_FILTER_DEFAULT : false) ){
     contentDivStyleDisplay = contentDiv.style.display;
     contentDiv.style.display = "none";
   }
@@ -724,6 +311,27 @@ function drawUi() {
   // Add the filter UI to the correct place on the current page
   insertFilterUi(headerDiv);
   insertFilterUi(contentDiv);
+  
+  // Remove bottom banner
+  if (typeof HIDE_BOTTOM_BANNER !== 'undefined' && HIDE_BOTTOM_BANNER)
+  {
+    document.getElementById('bottom').style.display = 'none';
+  }
+
+  // Remove bottom clearfix (if only one page exists)
+  if (typeof HIDE_BOTTOM_CLEARFIX !== 'undefined' && HIDE_BOTTOM_CLEARFIX)
+  {
+    var clearfix = document.getElementsByClassName('releases_bottom clearfix')[0];
+    if(clearfix.childElementCount == 0)
+      clearfix.style.display = 'none';
+  }
+
+}
+
+function onCheckboxClick(filter){
+  GM_setValue(filter.key, !filter.checkbox.checked);
+  filter.bool = !filter.checkbox.checked;
+  filterReleases();
 }
 
 // Inserts a node into the rls_filter_selection div
@@ -738,7 +346,6 @@ function insertFilterUi(filterUi) {
 }
 
 // Makes the "new comments" header clickable (hide/unhide)
-clickableNewComments();
 function clickableNewComments(){
   var divs_titles = document.getElementsByClassName('box_title1');
   if (divs_titles.length > 1){
@@ -762,16 +369,19 @@ function clickableNewComments(){
   }
 }
 
-// Remove bottom banner
-if (typeof HIDE_BOTTOM_BANNER !== 'undefined' && HIDE_BOTTOM_BANNER)
-{
-  document.getElementById('bottom').style.display = 'none';
-}
-
-// Remove bottom clearfix (if only one page exists)
-if (typeof HIDE_BOTTOM_CLEARFIX !== 'undefined' && HIDE_BOTTOM_CLEARFIX)
-{
-  var clearfix = document.getElementsByClassName('releases_bottom clearfix')[0];
-  if(clearfix.childElementCount == 0)
-    clearfix.style.display = 'none';
+// Make span text unselectable
+function unselectable(span){
+  if ('unselectable' in span)       // Internet Explorer, Opera
+    span.unselectable = !span.unselectable;
+  else {
+    if (window.getComputedStyle) {
+      var style = window.getComputedStyle (span, null);
+      if ('MozUserSelect' in style) { // Firefox
+        span.style.MozUserSelect = (style.MozUserSelect == "none") ? "text" : "none";
+      }
+      else
+        if ('webkitUserSelect' in style)      // Google Chrome and Safari
+          span.style.webkitUserSelect = (style.webkitUserSelect == "none") ? "text" : "none";
+    }
+  }
 }
