@@ -7,7 +7,7 @@
 // @include     http://www.xrel.to/tv/*/releases.html*
 // @downloadURL https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.user.js
 // @updateURL   https://github.com/0657code/greasemonkey-xrel-filter/raw/master/xREL_Release_Filter.meta.js
-// @version     1.0
+// @version     1.0.1
 // @grant       GM_getValue
 // @grant       GM_setValue
 // ==/UserScript==
@@ -34,6 +34,7 @@
   var CONST_RLSNAME_1080P = /1080p/i;
   var CONST_RLSNAME_COMPLETE_BLURAY = /Complete.Bluray/i;
 
+  var KEY_FILTER_MASTERSWITCH = "filterMasterSwitch";
   var KEY_FILTER_TYPE_TELESYNC = "filterTypeTeleSync";
   var KEY_FILTER_TYPE_WEBRIP = "filterTypeWebRip";
   var KEY_FILTER_TYPE_DVD_RIP = "filterTypeDvdRip";
@@ -68,6 +69,7 @@
   var FILTER_GROUP_WHITELIST = [
   ]
 
+  var filter_MasterSwitch = GM_getValue(KEY_FILTER_MASTERSWITCH, DEFAULT_FILTER_STATUS);
   var filter_Type_TeleSync = GM_getValue(KEY_FILTER_TYPE_TELESYNC, DEFAULT_FILTER_STATUS);
   var filter_Type_WebRip = GM_getValue(KEY_FILTER_TYPE_WEBRIP, DEFAULT_FILTER_STATUS);
   var filter_Type_DvdRip = GM_getValue(KEY_FILTER_TYPE_DVD_RIP, DEFAULT_FILTER_STATUS);
@@ -89,154 +91,162 @@
   var commentDivStyleDisplay;
 }
 
-// Main function
+// Filter function
 filterReleases();
 function filterReleases() {
-  var releasesToRemove = [];
   var releases = getReleases();
-  
-  // Filter loop, fills releasesToRemove array
-  for (i = 0; i < releases.length; i++) {
-    // Remove the filtering
+
+  // Remove the filtering
+  for (i = 0; i < releases.length; i++)
     removeFiltering(releases[i]);
-    
-    // Type filters
-    {
-      if (filter_Type_TeleSync) {
-        if (isReleaseType(releases[i], CONST_TYPE_TELESYNC)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_WebRip) {
-        if (isReleaseType(releases[i], CONST_TYPE_WEBRIP)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_DvdRip) {
-        if (isReleaseType(releases[i], CONST_TYPE_DVD_RIP)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_DvdScr) {
-        if (isReleaseType(releases[i], CONST_TYPE_DVD_SCR)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_Dvd) {
-        if (isReleaseType(releases[i], CONST_TYPE_DVD)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_Hdtv) {
-        if (isReleaseType(releases[i], CONST_TYPE_HDTV)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Type_BluRay) {
-        if (isReleaseType(releases[i], CONST_TYPE_BLURAY)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-    }
-    
-    // Category filters
-    {
-      if (filter_Cat_Xvid) {
-        if (isReleaseCat(releases[i], CONST_CAT_XVID)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Cat_X264) {
-        if (isReleaseCat(releases[i], CONST_CAT_X264)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Cat_Dvd) {
-        if (isReleaseCat(releases[i], CONST_CAT_DVD)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Cat_Hdtv) {
-        if (isReleaseCat(releases[i], CONST_CAT_HDTV)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Cat_CompleteHd) {
-        if (isReleaseCat(releases[i], CONST_CAT_COMPLETE_HD)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-    }
-    
-    // Releasename filters
-    {
-      if (filter_Rlsname_BdRip) {
-        if (isReleaseName(releases[i], CONST_RLSNAME_BDRIP)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Rlsname_720p) {
-        if (isReleaseName(releases[i], CONST_RLSNAME_720P)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Rlsname_1080p) {
-        if (isReleaseName(releases[i], CONST_RLSNAME_1080P)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-      if (filter_Rlsname_CompleteBluRay) {
-        if (isReleaseName(releases[i], CONST_RLSNAME_COMPLETE_BLURAY)) {
-          releasesToRemove.push(releases[i]);
-          continue;
-        }
-      }
-    }
-    
-    // US-Release filter
-    if (typeof FILTER_US_RELEASE !== 'undefined' && FILTER_US_RELEASE) {
-      if (releases[i].className == "release_item release_us") {
-        releasesToRemove.push(releases[i]);
-        continue;
-      }
-    }
-    
-    // Season filter
-    if (typeof FILTER_SEASON_WHITELIST !== 'undefined' && FILTER_SEASON_WHITELIST.length > 0 && window.location.pathname.search(/\/tv\//i) != -1) {
-      if (!isReleaseSeason(releases[i], FILTER_SEASON_WHITELIST)) {
-        releasesToRemove.push(releases[i]);
-        continue;
-      }
-    }
-    
-    // Group filter
-    if (typeof FILTER_GROUP_WHITELIST !== 'undefined' && FILTER_GROUP_WHITELIST.length > 0) {
-      if (!isReleaseByGroup(releases[i], FILTER_GROUP_WHITELIST)) {
-        releasesToRemove.push(releases[i]);
-        continue;
-      }
-    }
-  }
   
-  // Remove the releases in releasesToRemove array
-  for (i = 0; i < releasesToRemove.length; i++) {
-    releasesToRemove[i].style.display = 'none';
-    releasesToRemove[i].nextElementSibling.style.display = 'none';
+  if(filter_MasterSwitch)
+  {
+    var releasesToRemove = [];
+
+    // Filter loop, fills releasesToRemove array
+    for (i = 0; i < releases.length; i++) {
+      // Remove the filtering
+      removeFiltering(releases[i]);
+
+      // Type filters
+      {
+        if (filter_Type_TeleSync) {
+          if (isReleaseType(releases[i], CONST_TYPE_TELESYNC)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_WebRip) {
+          if (isReleaseType(releases[i], CONST_TYPE_WEBRIP)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_DvdRip) {
+          if (isReleaseType(releases[i], CONST_TYPE_DVD_RIP)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_DvdScr) {
+          if (isReleaseType(releases[i], CONST_TYPE_DVD_SCR)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_Dvd) {
+          if (isReleaseType(releases[i], CONST_TYPE_DVD)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_Hdtv) {
+          if (isReleaseType(releases[i], CONST_TYPE_HDTV)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Type_BluRay) {
+          if (isReleaseType(releases[i], CONST_TYPE_BLURAY)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+      }
+
+      // Category filters
+      {
+        if (filter_Cat_Xvid) {
+          if (isReleaseCat(releases[i], CONST_CAT_XVID)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Cat_X264) {
+          if (isReleaseCat(releases[i], CONST_CAT_X264)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Cat_Dvd) {
+          if (isReleaseCat(releases[i], CONST_CAT_DVD)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Cat_Hdtv) {
+          if (isReleaseCat(releases[i], CONST_CAT_HDTV)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Cat_CompleteHd) {
+          if (isReleaseCat(releases[i], CONST_CAT_COMPLETE_HD)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+      }
+
+      // Releasename filters
+      {
+        if (filter_Rlsname_BdRip) {
+          if (isReleaseName(releases[i], CONST_RLSNAME_BDRIP)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Rlsname_720p) {
+          if (isReleaseName(releases[i], CONST_RLSNAME_720P)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Rlsname_1080p) {
+          if (isReleaseName(releases[i], CONST_RLSNAME_1080P)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+        if (filter_Rlsname_CompleteBluRay) {
+          if (isReleaseName(releases[i], CONST_RLSNAME_COMPLETE_BLURAY)) {
+            releasesToRemove.push(releases[i]);
+            continue;
+          }
+        }
+      }
+
+      // US-Release filter
+      if (typeof FILTER_US_RELEASE !== 'undefined' && FILTER_US_RELEASE) {
+        if (releases[i].className == "release_item release_us") {
+          releasesToRemove.push(releases[i]);
+          continue;
+        }
+      }
+
+      // Season filter
+      if (typeof FILTER_SEASON_WHITELIST !== 'undefined' && FILTER_SEASON_WHITELIST.length > 0 && window.location.pathname.search(/\/tv\//i) != -1) {
+        if (!isReleaseSeason(releases[i], FILTER_SEASON_WHITELIST)) {
+          releasesToRemove.push(releases[i]);
+          continue;
+        }
+      }
+
+      // Group filter
+      if (typeof FILTER_GROUP_WHITELIST !== 'undefined' && FILTER_GROUP_WHITELIST.length > 0) {
+        if (!isReleaseByGroup(releases[i], FILTER_GROUP_WHITELIST)) {
+          releasesToRemove.push(releases[i]);
+          continue;
+        }
+      }
+    }
+
+    // Remove the releases in releasesToRemove array
+    for (i = 0; i < releasesToRemove.length; i++) {
+      releasesToRemove[i].style.display = 'none';
+      releasesToRemove[i].nextElementSibling.style.display = 'none';
+    }
   }
 }
 
@@ -309,8 +319,10 @@ function drawUi() {
     headerDiv.style.paddingRight = "10px";
     headerDiv.style.cursor = "pointer";
     headerDiv.style.font = '700 14px/22px "Open Sans",sans-serif';
-    headerDiv.appendChild(document.createTextNode( "Filter"/*getFilterCaption()*/));
-    headerDiv.onclick = function() {
+    
+    var headerTextSpan = document.createElement("span");
+    headerTextSpan.appendChild(document.createTextNode(" Filter "/*getFilterCaption()*/));
+    headerTextSpan.onclick = function() {
       // Clicking on the header opens/closes the filter details UI
       var contentDiv = document.getElementById(ID_DIV_CONTENT);
       if (contentDiv.style.display !== "none"){
@@ -320,6 +332,18 @@ function drawUi() {
       else
         contentDiv.style.display = contentDivStyleDisplay;
     };
+    
+    var headerCheckbox = document.createElement("input");
+        headerCheckbox.setAttribute("type", "checkbox");
+        headerCheckbox.checked = filter_MasterSwitch;
+        headerCheckbox.onclick = function() {
+          GM_setValue(KEY_FILTER_MASTERSWITCH, headerCheckbox.checked);
+          filter_MasterSwitch = headerCheckbox.checked;
+          filterReleases();
+        };
+    
+    headerDiv.appendChild(headerTextSpan);
+    headerDiv.appendChild(headerCheckbox);
   }
 
   // ContentDiv
