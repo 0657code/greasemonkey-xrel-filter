@@ -310,6 +310,51 @@ drawUi();
 function drawUi() {
   // HeaderDiv
   {
+    // HeaderTextSpan
+    {
+      var headerTextSpan = document.createElement("span");
+      headerTextSpan.appendChild(document.createTextNode(" Filter "/*getFilterCaption()*/));
+      headerTextSpan.onclick = function() {
+        // Clicking on the header opens/closes the filter details UI
+        var contentDiv = document.getElementById(ID_DIV_CONTENT);
+        if (contentDiv.style.display !== "none"){
+          contentDivStyleDisplay = contentDiv.style.display;
+          contentDiv.style.display = "none";
+        }
+        else{
+          contentDiv.style.display = contentDivStyleDisplay;
+        }
+      };
+      // Make unselectable
+      if ('unselectable' in headerTextSpan)       // Internet Explorer, Opera
+        headerTextSpan.unselectable = !headerTextSpan.unselectable;
+      else {
+        if (window.getComputedStyle) {
+          var style = window.getComputedStyle (headerTextSpan, null);
+          if ('MozUserSelect' in style) { // Firefox
+            headerTextSpan.style.MozUserSelect = (style.MozUserSelect == "none") ? "text" : "none";
+          }
+          else {
+            if ('webkitUserSelect' in style) {      // Google Chrome and Safari
+              headerTextSpan.style.webkitUserSelect = (style.webkitUserSelect == "none") ? "text" : "none";
+            }
+          }
+        }
+      }
+    }
+    
+    // HeaderCheckbox
+    {
+      var headerCheckbox = document.createElement("input");
+      headerCheckbox.setAttribute("type", "checkbox");
+      headerCheckbox.checked = filter_MasterSwitch;
+      headerCheckbox.onclick = function() {
+        GM_setValue(KEY_FILTER_MASTERSWITCH, headerCheckbox.checked);
+        filter_MasterSwitch = headerCheckbox.checked;
+        filterReleases();
+      };
+    }
+    
     var headerDiv = document.createElement("div");
     headerDiv.id = ID_DIV_HEADER;
     headerDiv.style.fontWeight = "700";
@@ -319,29 +364,6 @@ function drawUi() {
     headerDiv.style.paddingRight = "10px";
     headerDiv.style.cursor = "pointer";
     headerDiv.style.font = '700 14px/22px "Open Sans",sans-serif';
-    
-    var headerTextSpan = document.createElement("span");
-    headerTextSpan.appendChild(document.createTextNode(" Filter "/*getFilterCaption()*/));
-    headerTextSpan.onclick = function() {
-      // Clicking on the header opens/closes the filter details UI
-      var contentDiv = document.getElementById(ID_DIV_CONTENT);
-      if (contentDiv.style.display !== "none"){
-        contentDivStyleDisplay = contentDiv.style.display;
-        contentDiv.style.display = "none";
-      }
-      else
-        contentDiv.style.display = contentDivStyleDisplay;
-    };
-    
-    var headerCheckbox = document.createElement("input");
-        headerCheckbox.setAttribute("type", "checkbox");
-        headerCheckbox.checked = filter_MasterSwitch;
-        headerCheckbox.onclick = function() {
-          GM_setValue(KEY_FILTER_MASTERSWITCH, headerCheckbox.checked);
-          filter_MasterSwitch = headerCheckbox.checked;
-          filterReleases();
-        };
-    
     headerDiv.appendChild(headerTextSpan);
     headerDiv.appendChild(headerCheckbox);
   }
